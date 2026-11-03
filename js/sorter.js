@@ -228,7 +228,7 @@
     );
     elements.undo.disabled = state.history.length === 0;
     elements.undo.setAttribute("aria-disabled", String(state.history.length === 0));
-    elements.status.textContent = "跳過會保留兩首並各加 6 分；每首歌曲的跳過加分最多 18 分。";
+    elements.status.textContent = "";
   }
 
   function removeFromStagePool(ids) {

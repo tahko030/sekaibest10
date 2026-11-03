@@ -121,13 +121,16 @@
     ctx.closePath();
   }
 
-  function drawContainedImage(ctx, image, x, y, width, height) {
-    const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  function drawCoverImage(ctx, image, x, y, width, height) {
+    const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
     const drawWidth = image.naturalWidth * scale;
     const drawHeight = image.naturalHeight * scale;
-    ctx.fillStyle = "#02050a";
-    ctx.fillRect(x, y, width, height);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, width, height);
+    ctx.clip();
     ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+    ctx.restore();
   }
 
   function fitText(ctx, text, maxWidth, font) {
@@ -195,7 +198,7 @@
       roundedRect(ctx, 50, 280, 980, 390, 28);
       ctx.fillStyle = "rgba(17,34,62,0.94)";
       ctx.fill();
-      drawContainedImage(ctx, images[0], 74, 304, 588, 331);
+      drawCoverImage(ctx, images[0], 74, 304, 588, 331);
       ctx.fillStyle = "#35e2ec";
       ctx.font = '400 64px "Klee One", cursive';
       ctx.fillText("#1", 702, 382);
@@ -229,7 +232,7 @@
         roundedRect(ctx, x, y, cardWidth, cardHeight, 20);
         ctx.fillStyle = "rgba(17,34,62,0.94)";
         ctx.fill();
-        drawContainedImage(ctx, images[index], x + 14, y + 14, cardWidth - 28, 156);
+        drawCoverImage(ctx, images[index], x + 14, y + 14, cardWidth - 28, 156);
         ctx.fillStyle = "#35e2ec";
         ctx.font = '400 30px "Klee One", cursive';
         ctx.fillText(`#${index + 1}`, x + 18, y + 218);

@@ -119,26 +119,6 @@ button {
   margin: 0 auto;
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 22px;
-  color: var(--cyan);
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-}
-
-.eyebrow::before {
-  width: 28px;
-  height: 3px;
-  content: "";
-  border-radius: 999px;
-  background: currentColor;
-}
-
 h1,
 h2,
 h3,
@@ -481,7 +461,7 @@ p {
 .rank-image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .rank-copy {
