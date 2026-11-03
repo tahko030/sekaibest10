@@ -21,6 +21,7 @@
     leftChoose: document.querySelector("#left-choose"),
     rightChoose: document.querySelector("#right-choose"),
     skip: document.querySelector("#skip-button"),
+    mobileSkip: document.querySelector("#mobile-skip-button"),
     undo: document.querySelector("#undo-button"),
     status: document.querySelector("#sorter-status"),
   };
@@ -150,20 +151,22 @@
 
   function renderSong(side, song) {
     const color = app.unitColor(song.unit);
+    const videoId = app.videoIdFor(song);
     elements[`${side}Card`].style.setProperty("--unit-color", color);
     elements[`${side}Unit`].textContent = song.unit;
     elements[`${side}Title`].textContent = song.title;
     elements[`${side}Meta`].textContent = `${song.creator}｜${song.event}`;
     const player = players[side];
     if (player && typeof player.cueVideoById === "function") {
-      player.cueVideoById(song.id);
+      player.cueVideoById(videoId);
       player.getIframe().title = `${song.title} YouTube 播放器`;
     } else {
-      elements[`${side}Frame`].dataset.videoId = song.id;
+      elements[`${side}Frame`].dataset.videoId = videoId;
     }
   }
 
-  function createPlayer(side, videoId) {
+  function createPlayer(side, song) {
+    const videoId = app.videoIdFor(song);
     const playerVars = { playsinline: 1, rel: 0 };
     if (window.location.protocol === "https:" || window.location.protocol === "http:") {
       playerVars.origin = window.location.origin;
@@ -173,7 +176,7 @@
       playerVars,
       events: {
         onReady(event) {
-          event.target.getIframe().title = `${app.SONG_MAP.get(videoId).title} YouTube 播放器`;
+          event.target.getIframe().title = `${song.title} YouTube 播放器`;
         },
         onStateChange(event) {
           if (event.data !== window.YT.PlayerState.PLAYING) return;
@@ -195,8 +198,8 @@
 
   function initializeYouTubePlayers() {
     if (!state.currentPair || players.left || players.right) return;
-    players.left = createPlayer("left", state.currentPair[0]);
-    players.right = createPlayer("right", state.currentPair[1]);
+    players.left = createPlayer("left", app.SONG_MAP.get(state.currentPair[0]));
+    players.right = createPlayer("right", app.SONG_MAP.get(state.currentPair[1]));
   }
 
   window.onYouTubeIframeAPIReady = initializeYouTubePlayers;
@@ -321,6 +324,7 @@
     applyChoice(state.currentPair[1], state.currentPair[0]);
   });
   elements.skip.addEventListener("click", skipPair);
+  elements.mobileSkip.addEventListener("click", skipPair);
   elements.undo.addEventListener("click", undoLast);
 
   render();

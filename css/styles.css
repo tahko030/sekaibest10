@@ -290,6 +290,14 @@ p {
   gap: 18px;
 }
 
+#left-card {
+  grid-column: 1;
+}
+
+#right-card {
+  grid-column: 3;
+}
+
 .song-card {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -364,19 +372,8 @@ p {
   transform: translateY(-2px);
 }
 
-.versus {
-  display: grid;
-  width: 62px;
-  height: 62px;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  color: var(--pink);
-  background: #0b172a;
-  box-shadow: 0 0 38px rgba(255, 95, 162, 0.2);
-  font-size: 0.82rem;
-  font-weight: 950;
-  letter-spacing: 0.1em;
+.mobile-skip {
+  display: none;
 }
 
 .sorter-controls {
@@ -390,6 +387,10 @@ p {
   color: var(--muted);
   text-align: center;
   font-size: 0.88rem;
+}
+
+.status-message:empty {
+  display: none;
 }
 
 .result-hero {
@@ -617,8 +618,29 @@ p {
     grid-template-columns: 1fr;
   }
 
-  .versus {
-    margin: -8px auto;
+  #left-card {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  #right-card {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .mobile-skip {
+    display: inline-flex;
+    grid-column: 1;
+    grid-row: 2;
+    width: min(100%, 280px);
+    min-height: 46px;
+    margin: -4px auto;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .desktop-skip {
+    display: none;
   }
 
   .top-ten-grid {

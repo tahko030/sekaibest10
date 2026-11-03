@@ -135,6 +135,11 @@
     return [firstId, secondId].sort().join("::");
   }
 
+  function videoIdFor(songOrId) {
+    const song = typeof songOrId === "string" ? SONG_MAP.get(songOrId) : songOrId;
+    return song ? song.videoId || song.id : songOrId;
+  }
+
   function rankingScore(rating) {
     return rating.rating + rating.stageLevel * STAGE_WEIGHT + rating.skipBonus;
   }
@@ -244,6 +249,7 @@
     saveState,
     resetState,
     pairKey,
+    videoIdFor,
     getRankedSongs,
     getStage,
     getProgress,

@@ -38,7 +38,7 @@
       image.className = "rank-image";
       image.alt = `${song.title} 的 YouTube 影片縮圖`;
       image.loading = index < 3 ? "eager" : "lazy";
-      app.setThumbnailFallback(image, song.id);
+      app.setThumbnailFallback(image, app.videoIdFor(song));
       imageWrap.appendChild(image);
 
       const copy = document.createElement("div");
@@ -158,7 +158,7 @@
         ]);
       }
       const topTen = ranked.slice(0, 10);
-      const images = await Promise.all(topTen.map((song) => loadThumbnail(song.id)));
+      const images = await Promise.all(topTen.map((song) => loadThumbnail(app.videoIdFor(song))));
       const canvas = document.createElement("canvas");
       canvas.width = 1080;
       canvas.height = 1920;
