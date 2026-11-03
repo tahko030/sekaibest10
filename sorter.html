@@ -8,7 +8,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#07101f">
     <title>歌曲二選一｜プロセカ 書き下ろし楽曲</title>
-    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles.css?v=20261103-2">
   </head>
   <body>
     <header class="site-header site-shell">
@@ -48,7 +48,11 @@
           <button class="choice-button" id="left-choose" type="button">選這首</button>
         </article>
 
-        <div class="versus" aria-hidden="true">VS</div>
+        <div class="pair-actions" aria-label="兩首歌曲的共同操作">
+          <button class="button button-secondary pair-action" id="both-like-button" type="button">都喜歡</button>
+          <button class="button button-secondary pair-action" id="skip-button" type="button">跳過</button>
+          <button class="button button-secondary pair-action" id="both-dislike-button" type="button">都不喜歡</button>
+        </div>
 
         <article class="song-card" id="right-card">
           <div class="video-frame">
@@ -64,15 +68,14 @@
       </section>
 
       <div class="sorter-controls">
-        <button class="button button-secondary" id="skip-button" type="button">跳過這組</button>
         <button class="button button-secondary" id="undo-button" type="button">上一題</button>
         <a class="button button-secondary" href="./index.html">暫停並返回首頁</a>
       </div>
       <p class="status-message" id="sorter-status" aria-live="polite"></p>
     </main>
 
-    <script src="./js/songs.js"></script>
-    <script src="./js/common.js"></script>
-    <script src="./js/sorter.js"></script>
+    <script src="./js/songs.js?v=20261103-2"></script>
+    <script src="./js/common.js?v=20261103-3"></script>
+    <script src="./js/sorter.js?v=20261103-5"></script>
   </body>
 </html>

@@ -20,7 +20,9 @@
     rightMeta: document.querySelector("#right-meta"),
     leftChoose: document.querySelector("#left-choose"),
     rightChoose: document.querySelector("#right-choose"),
+    bothLike: document.querySelector("#both-like-button"),
     skip: document.querySelector("#skip-button"),
+    bothDislike: document.querySelector("#both-dislike-button"),
     undo: document.querySelector("#undo-button"),
     status: document.querySelector("#sorter-status"),
   };
@@ -91,7 +93,22 @@
   }
 
   function rankingPair() {
-    const pool = state.activeIds;
+    const rankedActiveIds = [...state.activeIds].sort((leftId, rightId) => {
+      const left = state.ratings[leftId];
+      const right = state.ratings[rightId];
+      return (
+        app.rankingScore(right) - app.rankingScore(left) ||
+        right.wins - left.wins ||
+        left.losses - right.losses
+      );
+    });
+    const phase = app.getRankingPhase(state);
+    const pool =
+      phase === "boundary"
+        ? rankedActiveIds.slice(6, 18)
+        : phase === "top12"
+          ? rankedActiveIds.slice(0, 12)
+          : rankedActiveIds;
     if (pool.length < 2) return null;
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     shuffled.sort(
@@ -113,7 +130,7 @@
           skipped: skipped.has(key),
           score:
             Math.abs(first.rankingComparisons - second.rankingComparisons) * 400 +
-            Math.abs(first.rating - second.rating) +
+            Math.abs(app.rankingScore(first) - app.rankingScore(second)) +
             (compared.has(key) ? 1200 : 0) +
             Math.random(),
         };
@@ -150,20 +167,22 @@
 
   function renderSong(side, song) {
     const color = app.unitColor(song.unit);
+    const videoId = app.videoIdFor(song);
     elements[`${side}Card`].style.setProperty("--unit-color", color);
     elements[`${side}Unit`].textContent = song.unit;
     elements[`${side}Title`].textContent = song.title;
     elements[`${side}Meta`].textContent = `${song.creator}｜${song.event}`;
     const player = players[side];
     if (player && typeof player.cueVideoById === "function") {
-      player.cueVideoById(song.id);
+      player.cueVideoById(videoId);
       player.getIframe().title = `${song.title} YouTube 播放器`;
     } else {
-      elements[`${side}Frame`].dataset.videoId = song.id;
+      elements[`${side}Frame`].dataset.videoId = videoId;
     }
   }
 
-  function createPlayer(side, videoId) {
+  function createPlayer(side, song) {
+    const videoId = app.videoIdFor(song);
     const playerVars = { playsinline: 1, rel: 0 };
     if (window.location.protocol === "https:" || window.location.protocol === "http:") {
       playerVars.origin = window.location.origin;
@@ -173,7 +192,7 @@
       playerVars,
       events: {
         onReady(event) {
-          event.target.getIframe().title = `${app.SONG_MAP.get(videoId).title} YouTube 播放器`;
+          event.target.getIframe().title = `${song.title} YouTube 播放器`;
         },
         onStateChange(event) {
           if (event.data !== window.YT.PlayerState.PLAYING) return;
@@ -195,8 +214,8 @@
 
   function initializeYouTubePlayers() {
     if (!state.currentPair || players.left || players.right) return;
-    players.left = createPlayer("left", state.currentPair[0]);
-    players.right = createPlayer("right", state.currentPair[1]);
+    players.left = createPlayer("left", app.SONG_MAP.get(state.currentPair[0]));
+    players.right = createPlayer("right", app.SONG_MAP.get(state.currentPair[1]));
   }
 
   window.onYouTubeIframeAPIReady = initializeYouTubePlayers;
@@ -228,7 +247,7 @@
     );
     elements.undo.disabled = state.history.length === 0;
     elements.undo.setAttribute("aria-disabled", String(state.history.length === 0));
-    elements.status.textContent = "跳過會保留兩首並各加 6 分；每首歌曲的跳過加分最多 18 分。";
+    elements.status.textContent = "";
   }
 
   function removeFromStagePool(ids) {
@@ -241,11 +260,15 @@
     state.history.push(createHistoryEntry("choice", pair));
     const winner = state.ratings[winnerId];
     const loser = state.ratings[loserId];
+    const rankingPhase = state.stage === "ranking" ? app.getRankingPhase(state) : null;
     const expectedWinner = 1 / (1 + 10 ** ((loser.rating - winner.rating) / 400));
     const expectedLoser = 1 - expectedWinner;
     const k = state.stage === "ranking" ? 32 : 48;
     winner.rating += k * (1 - expectedWinner);
     loser.rating += k * (0 - expectedLoser);
+    if (rankingPhase === "top12" && app.rankingScore(winner) <= app.rankingScore(loser)) {
+      winner.rating += app.rankingScore(loser) - app.rankingScore(winner) + 1;
+    }
     winner.comparisons += 1;
     loser.comparisons += 1;
     winner.wins += 1;
@@ -275,14 +298,17 @@
     }
   }
 
-  function skipPair() {
+  function deferPair(type, adjustment) {
     const pair = [...state.currentPair];
     const key = app.pairKey(pair[0], pair[1]);
-    state.history.push(createHistoryEntry("skip", pair));
-    if (!state.skipRewardedPairs.includes(key)) {
+    state.history.push(createHistoryEntry(type, pair));
+    if (adjustment !== 0 && !state.skipRewardedPairs.includes(key)) {
       pair.forEach((id) => {
         const rating = state.ratings[id];
-        rating.skipBonus = Math.min(app.MAX_SKIP_BONUS, rating.skipBonus + app.SKIP_BONUS);
+        rating.skipBonus = Math.max(
+          -app.MAX_SKIP_BONUS,
+          Math.min(app.MAX_SKIP_BONUS, rating.skipBonus + adjustment),
+        );
       });
       state.skipRewardedPairs.push(key);
     }
@@ -291,6 +317,18 @@
     state.currentPair = nextPair();
     app.saveState(state);
     render();
+  }
+
+  function bothLikePair() {
+    deferPair("both-like", app.SKIP_BONUS);
+  }
+
+  function skipPair() {
+    deferPair("skip", 0);
+  }
+
+  function bothDislikePair() {
+    deferPair("both-dislike", -app.SKIP_BONUS);
   }
 
   function undoLast() {
@@ -320,7 +358,9 @@
   elements.rightChoose.addEventListener("click", () => {
     applyChoice(state.currentPair[1], state.currentPair[0]);
   });
+  elements.bothLike.addEventListener("click", bothLikePair);
   elements.skip.addEventListener("click", skipPair);
+  elements.bothDislike.addEventListener("click", bothDislikePair);
   elements.undo.addEventListener("click", undoLast);
 
   render();
