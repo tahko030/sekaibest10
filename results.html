@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow, noarchive">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#07101f">
+    <title>我的歌曲排名｜プロセカ 書き下ろし楽曲</title>
+    <link rel="stylesheet" href="./css/styles.css">
+  </head>
+  <body>
+    <header class="site-header site-shell">
+      <a class="brand" href="./index.html" aria-label="返回首頁">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>MY SEKAI SORTER</span>
+      </a>
+      <button class="button button-secondary" id="continue-sorting" type="button">繼續精排（+20 題）</button>
+    </header>
+
+    <main class="page-main site-shell">
+      <section class="empty-state" id="empty-state" hidden>
+        <h1>還沒有排序結果</h1>
+        <p>先完成幾組歌曲比較，再回來查看目前排名。</p>
+        <a class="button button-primary" href="./sorter.html">開始排序</a>
+      </section>
+
+      <div id="result-content">
+        <section class="result-hero">
+          <label class="nickname-field" for="nickname-input">
+            <span>暱稱</span>
+            <input id="nickname-input" type="text" maxlength="24" autocomplete="nickname" placeholder="輸入暱稱">
+          </label>
+          <div class="page-heading">
+            <div>
+              <h1 class="page-title">MY TOP 10</h1>
+            </div>
+            <div>
+              <div class="result-actions">
+                <button class="button button-primary" id="export-button" type="button">下載圖片</button>
+                <button class="button button-danger" id="restart-button" type="button">重新開始</button>
+              </div>
+              <p class="export-status" id="export-status" aria-live="polite"></p>
+            </div>
+          </div>
+          <div class="top-ten-grid" id="top-ten-grid"></div>
+        </section>
+
+        <section class="full-ranking">
+          <h2>第 11 名之後</h2>
+          <ol class="ranking-list" id="ranking-list" start="11"></ol>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer site-shell">Top 10 uses YouTube video thumbnails · 第 11 名之後顯示歌曲標題與作詞曲者</footer>
+
+    <script src="./js/songs.js"></script>
+    <script src="./js/common.js"></script>
+    <script src="./js/results.js"></script>
+  </body>
+</html>
