@@ -6,13 +6,17 @@
   const MAX_SKIP_BONUS = 18;
   const STAGE_WEIGHT = 120;
   const REFINEMENT_QUESTIONS = 20;
+  const DISCOVERY_QUESTIONS = 20;
+  const BOUNDARY_QUESTIONS = 15;
+  const TOP_TWELVE_QUESTIONS = 24;
   const SONGS = Array.isArray(window.PROSEKA_SONGS) ? window.PROSEKA_SONGS : [];
   const SONG_MAP = new Map(SONGS.map((song) => [song.id, song]));
   const ROUND_ONE_QUESTIONS = Math.ceil(SONGS.length / 2);
   const ROUND_TWO_COUNT = Math.ceil(ROUND_ONE_QUESTIONS / 2);
   const ROUND_TWO_QUESTIONS = ROUND_TWO_COUNT;
   const FINAL_ACTIVE_COUNT = ROUND_TWO_COUNT;
-  const INITIAL_RANKING_QUESTIONS = Math.ceil((FINAL_ACTIVE_COUNT * 3) / 2);
+  const INITIAL_RANKING_QUESTIONS =
+    DISCOVERY_QUESTIONS + BOUNDARY_QUESTIONS + TOP_TWELVE_QUESTIONS;
   const INITIAL_TOTAL_QUESTIONS =
     ROUND_ONE_QUESTIONS + ROUND_TWO_QUESTIONS + INITIAL_RANKING_QUESTIONS;
 
@@ -144,6 +148,13 @@
     return rating.rating + rating.stageLevel * STAGE_WEIGHT + rating.skipBonus;
   }
 
+  function getRankingPhase(state) {
+    const answered = state.rankingQuestions || 0;
+    if (answered < DISCOVERY_QUESTIONS) return "discovery";
+    if (answered < DISCOVERY_QUESTIONS + BOUNDARY_QUESTIONS) return "boundary";
+    return "top12";
+  }
+
   function getRankedSongs(state) {
     return [...SONGS].sort((left, right) => {
       const a = state.ratings[left.id] || createRating();
@@ -171,7 +182,14 @@
     const labels = {
       round1: "全曲比較",
       round2: "喜好確認",
-      ranking: state.targetQuestions > INITIAL_TOTAL_QUESTIONS ? "繼續精排" : "前段名次確認",
+      ranking:
+        state.targetQuestions > INITIAL_TOTAL_QUESTIONS
+          ? "繼續精排"
+          : {
+              discovery: "候選探索",
+              boundary: "前 12 名邊界確認",
+              top12: "前 12 名精排",
+            }[getRankingPhase(state)],
       complete: "排序完成",
     };
     return {
@@ -244,13 +262,18 @@
     INITIAL_RANKING_QUESTIONS,
     INITIAL_TOTAL_QUESTIONS,
     REFINEMENT_QUESTIONS,
+    DISCOVERY_QUESTIONS,
+    BOUNDARY_QUESTIONS,
+    TOP_TWELVE_QUESTIONS,
     createInitialState,
     loadState,
     saveState,
     resetState,
     pairKey,
     videoIdFor,
+    rankingScore,
     getRankedSongs,
+    getRankingPhase,
     getStage,
     getProgress,
     extendSorting,

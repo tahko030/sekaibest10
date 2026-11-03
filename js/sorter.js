@@ -92,7 +92,22 @@
   }
 
   function rankingPair() {
-    const pool = state.activeIds;
+    const rankedActiveIds = [...state.activeIds].sort((leftId, rightId) => {
+      const left = state.ratings[leftId];
+      const right = state.ratings[rightId];
+      return (
+        app.rankingScore(right) - app.rankingScore(left) ||
+        right.wins - left.wins ||
+        left.losses - right.losses
+      );
+    });
+    const phase = app.getRankingPhase(state);
+    const pool =
+      phase === "boundary"
+        ? rankedActiveIds.slice(6, 18)
+        : phase === "top12"
+          ? rankedActiveIds.slice(0, 12)
+          : rankedActiveIds;
     if (pool.length < 2) return null;
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     shuffled.sort(
@@ -114,7 +129,7 @@
           skipped: skipped.has(key),
           score:
             Math.abs(first.rankingComparisons - second.rankingComparisons) * 400 +
-            Math.abs(first.rating - second.rating) +
+            Math.abs(app.rankingScore(first) - app.rankingScore(second)) +
             (compared.has(key) ? 1200 : 0) +
             Math.random(),
         };
@@ -244,11 +259,15 @@
     state.history.push(createHistoryEntry("choice", pair));
     const winner = state.ratings[winnerId];
     const loser = state.ratings[loserId];
+    const rankingPhase = state.stage === "ranking" ? app.getRankingPhase(state) : null;
     const expectedWinner = 1 / (1 + 10 ** ((loser.rating - winner.rating) / 400));
     const expectedLoser = 1 - expectedWinner;
     const k = state.stage === "ranking" ? 32 : 48;
     winner.rating += k * (1 - expectedWinner);
     loser.rating += k * (0 - expectedLoser);
+    if (rankingPhase === "top12" && app.rankingScore(winner) <= app.rankingScore(loser)) {
+      winner.rating += app.rankingScore(loser) - app.rankingScore(winner) + 1;
+    }
     winner.comparisons += 1;
     loser.comparisons += 1;
     winner.wins += 1;
