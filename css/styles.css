@@ -285,17 +285,19 @@ p {
 
 .duel-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 148px minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
   gap: 18px;
 }
 
 #left-card {
   grid-column: 1;
+  grid-row: 1;
 }
 
 #right-card {
-  grid-column: 3;
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .song-card {
@@ -374,7 +376,11 @@ p {
 
 .pair-actions {
   display: grid;
-  grid-column: 2;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 620px);
+  margin: 6px auto 0;
   gap: 10px;
 }
 
