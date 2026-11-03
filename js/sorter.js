@@ -21,7 +21,6 @@
     leftChoose: document.querySelector("#left-choose"),
     rightChoose: document.querySelector("#right-choose"),
     skip: document.querySelector("#skip-button"),
-    mobileSkip: document.querySelector("#mobile-skip-button"),
     undo: document.querySelector("#undo-button"),
     status: document.querySelector("#sorter-status"),
   };
@@ -92,22 +91,7 @@
   }
 
   function rankingPair() {
-    const rankedActiveIds = [...state.activeIds].sort((leftId, rightId) => {
-      const left = state.ratings[leftId];
-      const right = state.ratings[rightId];
-      return (
-        app.rankingScore(right) - app.rankingScore(left) ||
-        right.wins - left.wins ||
-        left.losses - right.losses
-      );
-    });
-    const phase = app.getRankingPhase(state);
-    const pool =
-      phase === "boundary"
-        ? rankedActiveIds.slice(6, 18)
-        : phase === "top12"
-          ? rankedActiveIds.slice(0, 12)
-          : rankedActiveIds;
+    const pool = state.activeIds;
     if (pool.length < 2) return null;
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     shuffled.sort(
@@ -129,7 +113,7 @@
           skipped: skipped.has(key),
           score:
             Math.abs(first.rankingComparisons - second.rankingComparisons) * 400 +
-            Math.abs(app.rankingScore(first) - app.rankingScore(second)) +
+            Math.abs(first.rating - second.rating) +
             (compared.has(key) ? 1200 : 0) +
             Math.random(),
         };
@@ -166,22 +150,20 @@
 
   function renderSong(side, song) {
     const color = app.unitColor(song.unit);
-    const videoId = app.videoIdFor(song);
     elements[`${side}Card`].style.setProperty("--unit-color", color);
     elements[`${side}Unit`].textContent = song.unit;
     elements[`${side}Title`].textContent = song.title;
     elements[`${side}Meta`].textContent = `${song.creator}｜${song.event}`;
     const player = players[side];
     if (player && typeof player.cueVideoById === "function") {
-      player.cueVideoById(videoId);
+      player.cueVideoById(song.id);
       player.getIframe().title = `${song.title} YouTube 播放器`;
     } else {
-      elements[`${side}Frame`].dataset.videoId = videoId;
+      elements[`${side}Frame`].dataset.videoId = song.id;
     }
   }
 
-  function createPlayer(side, song) {
-    const videoId = app.videoIdFor(song);
+  function createPlayer(side, videoId) {
     const playerVars = { playsinline: 1, rel: 0 };
     if (window.location.protocol === "https:" || window.location.protocol === "http:") {
       playerVars.origin = window.location.origin;
@@ -191,7 +173,7 @@
       playerVars,
       events: {
         onReady(event) {
-          event.target.getIframe().title = `${song.title} YouTube 播放器`;
+          event.target.getIframe().title = `${app.SONG_MAP.get(videoId).title} YouTube 播放器`;
         },
         onStateChange(event) {
           if (event.data !== window.YT.PlayerState.PLAYING) return;
@@ -213,8 +195,8 @@
 
   function initializeYouTubePlayers() {
     if (!state.currentPair || players.left || players.right) return;
-    players.left = createPlayer("left", app.SONG_MAP.get(state.currentPair[0]));
-    players.right = createPlayer("right", app.SONG_MAP.get(state.currentPair[1]));
+    players.left = createPlayer("left", state.currentPair[0]);
+    players.right = createPlayer("right", state.currentPair[1]);
   }
 
   window.onYouTubeIframeAPIReady = initializeYouTubePlayers;
@@ -246,7 +228,7 @@
     );
     elements.undo.disabled = state.history.length === 0;
     elements.undo.setAttribute("aria-disabled", String(state.history.length === 0));
-    elements.status.textContent = "";
+    elements.status.textContent = "跳過會保留兩首並各加 6 分；每首歌曲的跳過加分最多 18 分。";
   }
 
   function removeFromStagePool(ids) {
@@ -259,15 +241,11 @@
     state.history.push(createHistoryEntry("choice", pair));
     const winner = state.ratings[winnerId];
     const loser = state.ratings[loserId];
-    const rankingPhase = state.stage === "ranking" ? app.getRankingPhase(state) : null;
     const expectedWinner = 1 / (1 + 10 ** ((loser.rating - winner.rating) / 400));
     const expectedLoser = 1 - expectedWinner;
     const k = state.stage === "ranking" ? 32 : 48;
     winner.rating += k * (1 - expectedWinner);
     loser.rating += k * (0 - expectedLoser);
-    if (rankingPhase === "top12" && app.rankingScore(winner) <= app.rankingScore(loser)) {
-      winner.rating += app.rankingScore(loser) - app.rankingScore(winner) + 1;
-    }
     winner.comparisons += 1;
     loser.comparisons += 1;
     winner.wins += 1;
@@ -343,7 +321,6 @@
     applyChoice(state.currentPair[1], state.currentPair[0]);
   });
   elements.skip.addEventListener("click", skipPair);
-  elements.mobileSkip.addEventListener("click", skipPair);
   elements.undo.addEventListener("click", undoLast);
 
   render();
